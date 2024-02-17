@@ -1,0 +1,273 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    font-size: 14px;
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    --text-color: #333333;
+    --bg-color: #F4F4F4;
+    --primary: #007BA7;
+    --card: #FFFFFF;
+    --border: #D1D1D1;
+    --black: #2d3740;
+}
+
+body {
+    min-height: 100vh;
+    width: 100%;
+    background-color: var(--bg-color);
+    margin: 0;
+}
+
+.card {
+    background-color: var(--card);
+    box-shadow: 0 0 6px 1px rgba(0, 0, 0, 0.1);
+}
+
+a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+a:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+}
+
+/** 
+BUTTON & INPUT STYLE */
+.button,
+.input {
+    border-radius: 5px;
+    border: 1px solid transparent;
+    padding: 0.5rem 1.2rem;
+    font-size: 1em;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.3s;
+    user-select: none;
+    position: relative;
+}
+
+.button::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+}
+
+.button:hover {
+    opacity: 0.8;
+}
+
+.button:active {
+    transform: scale(0.95);
+}
+
+.button_secondry {
+    background-color: #FFFFFF;
+    color: var(--text-color);
+}
+
+.card .button_secondry {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+.button_secondry:hover {
+    border-color: var(--border);
+}
+
+.button_primary {
+    background-color: var(--primary);
+    color: #fff;
+}
+
+.button_primary:hover {
+    border-color: var(--primary);
+}
+
+.button_icon {
+    padding: 0.2rem 0.5rem;
+}
+
+.button_icon svg {
+    height: 22px;
+    width: 22px;
+    margin-top: 0.2rem;
+}
+
+.button_icon path {
+    stroke: var(--black);
+}
+
+.button_icon.active path {
+    stroke: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
+.input {
+    cursor: unset;
+}
+
+.card .input {
+    background-color: var(--bg-color);
+    border-color: var(--border);
+}
+
+.input:hover {
+    border-color: var(--primary);
+}
+
+/* CHECKBOX */
+.checkbox {
+    position: relative;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    transition: 0.3s;
+}
+
+.checkbox:hover {
+    opacity: 0.8;
+}
+
+.checkbox:active {
+    transform: scale(0.95);
+}
+
+.checkbox::before,
+.checkbox::after {
+    height: 100%;
+    width: 100%;
+    background-color: var(--black);
+    content: '';
+    position: absolute;
+    top: 0;
+    border-radius: 5px;
+    left: 0;
+    cursor: pointer;
+}
+
+.checkbox:checked::before {
+    background-color: var(--primary);
+}
+
+.checkbox::after {
+    height: 50%;
+    width: 50%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    opacity: 0;
+    border-radius: 5px;
+}
+
+.checkbox:checked::after {
+    opacity: 1;
+}
+
+/* MODAL STYLE */
+.modal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    position: fixed;
+    z-index: 110;
+    left: 100%;
+}
+
+.modal__dailog {
+    padding: 0.8rem;
+    width: 100%;
+    max-width: 420px;
+    transform: scale(0.9);
+    transition: transform 0.3s;
+}
+
+.modal.show {
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.modal.show .modal__dailog {
+    transform: scale(1);
+}
+
+.modal__dailog h3 {
+    font-size: 1.3rem;
+    font-weight: 500;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+}
+
+.modal__dailog input {
+    width: 100%;
+}
+
+.modal__group {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 2rem;
+}
+
+.modal__group button {
+    margin-left: 0.6rem;
+}
+
+.modal__dailog p {
+    font-size: 0.9rem;
+    color: var(--black);
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+/* ALERT */
+.alert {
+    position: fixed;
+    bottom: 30px;
+    left: 0;
+    z-index: 120;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.alert__message {
+    font-size: 1rem;
+    color: var(--text-color);
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    padding: 0.6rem;
+    border-radius: 5px;
+    margin-bottom: 0.4rem;
+    transition: 0.3s;
+    transform: translateX(-10px);
+}
+
+.alert__message.show {
+    transform: translateX(0);
+}
