@@ -98,7 +98,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
 
         else if (className.contains('form_edit')) {
-            window.location.href = "/editor.html?id=" + ID;
+            window.location.href = "./editor.html?id=" + ID;
         }
 
         else if (className.contains('form_export')) {

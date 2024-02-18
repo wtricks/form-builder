@@ -1,9 +1,10 @@
-import { element, exportDataInJSONFile, listen, localStorage, showAlert } from './core.js'
+import { element, exportDataInJSONFile, listen, localStorage, showAlert, showModal } from './core.js'
 
 window.addEventListener('DOMContentLoaded', () => {
     const LEFT_SIDEBAR_BTN = element('.button_left-sidebar');
     const RIGHT_SIDEBAR_BTN = element('.button_right-sidebar');
     const SIDEBAR_BODY = element('.sidebar__body');
+    const SIDEBAR_RIGHT = element('.sidebar_right');
     const EDITOR = element('.main .editor');
     const MAIN = element('.main');
     const JSON_TAB = element('.tab_json');
@@ -25,68 +26,71 @@ window.addEventListener('DOMContentLoaded', () => {
     let PREV_ACTIVE_ID = -1, CURRENT_ACTIVE_ID = -1; // Hold active ID
     let activeTab = 'layout'; // active tab in right sidebar
 
+    // Drag and drop functionallity
+    // We are using here pointer events, instead of 'drag' APIs.
+    const onDragStart = (event) => {
+        const CARD = event.target.parentNode.parentNode.parentNode;
+        const CLONED_ELEMENT = CARD.cloneNode(true);
 
-    // Drag and drop listeners
-    const onDraggingStart = (event) => {
-        const PARENT = event.target.parentNode.parentNode.parentNode;
-        const HAS_ACTIVE = PARENT.classList.contains('active');
-        PARENT.classList.remove('active');
-        PARENT.classList.add('grabbing');
+        // add "grabbing" class, so we can add specified transitions
+        CARD.classList.add('grabbing');
+        document.body.style.cursor = 'grabbing';
 
-        const ITEM_HEIGHT = PARENT.offsetHeight + 16;
-        const BODY_HEIGHT = SIDEBAR_BODY.offsetHeight;
-        const BODY_TOP = SIDEBAR_BODY.getBoundingClientRect().y;
+        // measurement relative to the viewport
+        const PARENT_OFFSET_TOP = SIDEBAR_BODY.getBoundingClientRect().y;
+        const CARD_POSITION = CARD.getBoundingClientRect();
+        const CARD_HEIGHT = parseInt(window.getComputedStyle(CARD).marginTop)
+            + CARD.offsetHeight;
+        const DRAG_BUTTON_OFFSET = (event.target.getBoundingClientRect().y - CARD_POSITION.y);
 
-        const DUMMY_NODE = document.createElement('div');
-        DUMMY_NODE.style.width = '100%';
-        DUMMY_NODE.style.height = ITEM_HEIGHT + 'px';
+        // attach our cloned element to the DOM.
+        CLONED_ELEMENT.style.cssText = `position:fixed;z-index:1000;top:${CARD_POSITION.y - DRAG_BUTTON_OFFSET}px;left:${CARD_POSITION.x}px;width:${CARD.offsetWidth}px;background:var(--card)`
+        document.body.appendChild(CLONED_ELEMENT);
 
-        let CURRENT_INDEX = Math.floor((PARENT.getBoundingClientRect().y - BODY_TOP) / ITEM_HEIGHT);
-        SIDEBAR_BODY.insertBefore(DUMMY_NODE, SIDEBAR_BODY.childNodes[CURRENT_INDEX])
-
-        const PREVIOUS_INDEX = CURRENT_INDEX;
-        const dragEvent = listen(PARENT, 'dragstart', (event) => {
-            // Prevent default browser drag behavior
-            event.preventDefault();
-        });
-
-        let Y1, Y2 = BODY_TOP + BODY_HEIGHT, TP, I1;
-        const moveEvent = listen(SIDEBAR_BODY, 'mousemove', (event) => {
-            Y1 = event.clientY - BODY_TOP;
-            TP = (Y1 < 0 ? 0 : Y1 > Y2 ? Y2 : Y1);
-            I1 = Math.floor(TP / ITEM_HEIGHT) + 1;
-
-            if (CURRENT_INDEX != I1) {
-                CURRENT_INDEX = I1 > CURRENT_INDEX
-                    ? I1 + 1 : I1;
-
-                SIDEBAR_BODY.insertBefore(
-                    DUMMY_NODE,
-                    SIDEBAR_BODY.childNodes[CURRENT_INDEX]
-                )
+        const calculateIndex = (top) => {
+            if (top < PARENT_OFFSET_TOP) {
+                return 0;
             }
 
-            // // PARENT.offsetTop
-            PARENT.style.top = TP + 'px';
+            return Math.floor((top - PARENT_OFFSET_TOP) / CARD_HEIGHT);
+        }
+
+        let CURRENT_INDEX = calculateIndex(CARD_POSITION.y);
+        let NEW_INDEX = CURRENT_INDEX, TEMP, LAST_Y = 0, DOWN = 'down';
+
+        // Prevent default browser drag behavior
+        const dragEvent = listen(CARD, 'dragstart', (event) => {
+            event.preventDefault();
         })
 
-        const upEvent = listen(SIDEBAR_BODY, 'mouseup', () => {
-            PARENT.classList.remove('grabbing');
-            moveEvent(), upEvent(), dragEvent();
+        const mousemove = listen(window, 'mousemove', (event) => {
+            CLONED_ELEMENT.style.top = (event.clientY - (3 * DRAG_BUTTON_OFFSET)) + 'px';
+            TEMP = calculateIndex(event.clientY - DRAG_BUTTON_OFFSET);
 
-            PARENT.style.top = ''
-            SIDEBAR_BODY.removeChild(DUMMY_NODE);
+            DOWN = event.clientY > LAST_Y;
+            LAST_Y = event.clientY;
 
-            if (HAS_ACTIVE) {
-                PARENT.classList.add('active');
+            if (TEMP != NEW_INDEX) {
+                SIDEBAR_BODY.insertBefore(CARD, SIDEBAR_BODY.childNodes[TEMP + (!DOWN ? 0 : 1)])
+                NEW_INDEX = TEMP;
             }
+        })
 
-            if (CURRENT_INDEX != -1) {
-                SIDEBAR_BODY.insertBefore(PARENT, SIDEBAR_BODY.childNodes[CURRENT_INDEX])
-                console.log(PREVIOUS_INDEX, CURRENT_INDEX - 1)
+        const mouseup = listen(window, 'mouseup', () => {
+            dragEvent(), mousemove(), mouseup();
+
+            CARD.classList.remove('grabbing')
+            document.body.style.cursor = ''
+            document.body.removeChild(CLONED_ELEMENT);
+
+            if (CURRENT_INDEX != NEW_INDEX) {
+                const data = PAGE.data[CURRENT_INDEX];
+                PAGE.data.splice(CURRENT_INDEX, 1);
+                PAGE.data.splice(NEW_INDEX, 0, data)
+
+                // render content again
+                renderChanges();
             }
-
-            // renderChanges();
         })
     }
 
@@ -98,14 +102,19 @@ window.addEventListener('DOMContentLoaded', () => {
             type: type,
             ...(type == 'heading' || type == 'paragraph'
                 ? { textContent: "Text goes here...", align: 'left' }
-                : {
-                    label: "Dummy Label",
-                    placeholder: "Dummy placeholder"
-                }),
+                : type == 'button' ? { textContent: 'Button' }
+                    : {
+                        label: "Dummy Label",
+                        placeholder: "Dummy placeholder"
+                    }),
             ...(type == 'choice' ? { choice: [] } : {})
         })
 
         renderChanges();
+
+        // scroll to the last
+        SIDEBAR_RIGHT.scrollTo(0, SIDEBAR_RIGHT.scrollHeight);
+        window.scrollTo(0, document.body.scrollHeight);
     }
 
     const openItemEditor = () => {
@@ -120,7 +129,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
             if (node.id == CURRENT_ACTIVE_ID) {
                 const data = PAGE.data.filter(item => item.id == CURRENT_ACTIVE_ID)[0];
-                const isHeading = data.type == 'heading' || data.type == 'paragraph';
+                const isHeading = data.type == 'heading' || data.type == 'paragraph' || data.type == 'button';
                 const needPlaceHolder = !isHeading && data.type != 'checkbox';
 
                 const body = document.createElement('div');
@@ -189,7 +198,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
                 if (isHeading) {
                     listen(textInput, 'change', () => {
-                        console.log("ETXT:")
                         data.textContent = textInput.value;
                         renderChanges();
                     });
@@ -263,6 +271,10 @@ window.addEventListener('DOMContentLoaded', () => {
                 </div>`
             }
 
+            else if (data.type == 'button') {
+                return `<button type="button" class="button button_primary">${data.textContent}</button>`
+            }
+
             else {
                 return `
                     ${data.label ? `<label for="${data.label}">${data.label}</label>` : ''}
@@ -276,7 +288,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         const layoutData = activeTab == 'layout' ? PAGE.data.map((data) => (`<div class="item" id="${data.id}" type="${data.type}" >
                 <div class="item__header">
-                    <h5>${data.type == 'choice' ? 'Multiple choice' : data.type}</h5>
+                    <h5>${data.type == 'choice' ? 'Multiple choice' : (data.type[0].toUpperCase() + data.type.slice(1))}</h5>
 
                     <div class="item__ctrl">
                         <button class="button button_icon button_trash" type="button" title="Remove item">
@@ -303,7 +315,7 @@ window.addEventListener('DOMContentLoaded', () => {
                         </button>
                     </div>
                 </div>
-            </div>`)).reverse().join("") : '';
+            </div>`)).join("") : '';
 
         EDITOR.innerHTML = editorData;
         SIDEBAR_BODY.innerHTML = layoutData;
@@ -333,6 +345,8 @@ window.addEventListener('DOMContentLoaded', () => {
         activeTab = 'json';
         LAYOUT_TAB.classList.remove('active')
         JSON_TAB.classList.add('active')
+
+        // TODO: Add functionality to show show JSON code inside the right sidebar
     })
 
     // listeners for left sidebar
@@ -343,7 +357,18 @@ window.addEventListener('DOMContentLoaded', () => {
     })
 
     // when user click on download button
-    listen(element('.button_download'), 'click', () => {
+    listen(element('.button_download'), 'click', async () => {
+        if (PAGE.data.length == 0) {
+            const result = await showModal({
+                heading: 'Download form page.',
+                paragraph: "This form page has not content, do you really want to download a empty form page?",
+                submitBtn: "Download",
+            })
+
+            if (!result) {
+                return
+            }
+        }
         exportDataInJSONFile(PAGE)
         showAlert("Form is downloading...")
     })
@@ -351,8 +376,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // when user upload custom json file
     listen(element('.button_upload'), 'click', () => {
         const inputElement = document.createElement('input')
-        inputElement.type = 'file'
-        document.body.appendChild(inputElement)
+        inputElement.type = 'file';
 
         inputElement.click();
 
@@ -375,8 +399,6 @@ window.addEventListener('DOMContentLoaded', () => {
                     showAlert("An error occured while parsing JSON file.")
                 }
             }
-
-            document.body.removeChild(inputElement)
         })
     })
 
@@ -404,7 +426,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // mousedown listener for dragging functionality
     listen(SIDEBAR_BODY, 'mousedown', (event) => {
         if (event.target.classList.contains('button_drag')) {
-            onDraggingStart(event);
+            onDragStart(event);
         }
     })
 
@@ -456,5 +478,4 @@ window.addEventListener('DOMContentLoaded', () => {
 
     listen(window, 'resize', checkForSidebarInSmallDevices)
     checkForSidebarInSmallDevices(); // initial measurments
-
 }) 
