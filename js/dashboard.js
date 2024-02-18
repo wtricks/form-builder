@@ -27,7 +27,7 @@ window.addEventListener('DOMContentLoaded', () => {
             formStorage(data);
 
             const BASE = window.location.href.split("/");
-            window.location.href = [...BASE.slice(0, -1), 'editor.html?id=123'].join("/");
+            window.location.href = [...BASE.slice(0, -1), 'editor.html?id=' + ID].join("/");
         }
     }
 
