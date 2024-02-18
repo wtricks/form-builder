@@ -26,7 +26,7 @@ window.addEventListener('DOMContentLoaded', () => {
             data.push({ id: ID, title: inputValue, data: [] })
             formStorage(data);
 
-            window.location.href = '/editor.html?id=' + ID
+            window.location.href = './editor.html?id=' + ID
         }
     }
 
