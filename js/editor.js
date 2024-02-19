@@ -107,7 +107,7 @@ window.addEventListener('DOMContentLoaded', () => {
                         label: "Dummy Label",
                         placeholder: "Dummy placeholder"
                     }),
-            ...(type == 'choice' ? { choice: [] } : {})
+            ...(type == 'options' ? { options: [] } : {})
         })
 
         renderChanges();
@@ -142,11 +142,11 @@ window.addEventListener('DOMContentLoaded', () => {
                         `<input type="text" class="input input_label" placeholder="Label" value="${data.label}">`}
                     ${needPlaceHolder ? `<input type="text" class="input input_placeholder" placeholder="Placeholder" value="${data.placeholder}">` : ''}
 
-                    ${data.type == 'choice' ? `
+                    ${data.type == 'options' ? `
                         <div class="divider"></div>
 
                         <h6>Options</h6>
-                        <textarea name="Options" class="input input_area" placehodler="Items seperated by newlines, ex. item1,item2,...">${data.choice}</textarea>
+                        <textarea name="Options" class="input input_area" placehodler="Items seperated by newlines, ex. item1,item2,...">${data.options.join("\n")}</textarea>
                     `: ''}
                     ${data.type == 'heading' || data.type == 'paragraph' ? `
                     <div class="divider"></div>
@@ -230,9 +230,9 @@ window.addEventListener('DOMContentLoaded', () => {
                     })
                 }
 
-                if (data.choice) {
+                if (data.options) {
                     listen(areaInput, 'change', () => {
-                        data.choice = areaInput.value.split(/\r?\n/);
+                        data.options = areaInput.value.split(/\r?\n/);
                         renderChanges()
                     })
                 }
@@ -280,7 +280,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     ${data.label ? `<label for="${data.label}">${data.label}</label>` : ''}
                     <select class="input" id="${data.label}">
                         ${data.placeholder ? `<option value="" selected disabled>${data.placeholder}</option>` : ''}
-                        ${data.choice.map(option => (`<option value="${option}">${option}</option>`)).join("")}
+                        ${data.options.map(option => (`<option value="${option}">${option}</option>`)).join("")}
                     </select>
                 `
             }
@@ -387,10 +387,19 @@ window.addEventListener('DOMContentLoaded', () => {
             reader.onload = () => {
                 try {
                     const data = JSON.parse(reader.result);
+                    if (!data || typeof data != "object") {
+                        throw new Error("Invalid form page.")
+                    }
+
                     currentData.push(PAGE = {
                         id: Math.random(),
-                        title: data.title || 'Untitled form',
-                        data: Array.isArray(data.data) ? data.data : []
+                        title: data?.title || 'Untitled form',
+
+                        // TODO: Validate "data" here.
+                        data: Array.isArray(data) 
+                            ? data 
+                            : Array.isArray(data.data) 
+                                ? data.data : []
                     })
 
                     renderChanges();

@@ -9,7 +9,7 @@ The project allow you to make forms visually using Json formate.
 
 - Local storage to store your forms.
 - Download and upload your forms data.
-- Supports many inputs ex. checkbox, text input, button, texarea, select.
+- Supports headings, paragraph and many inputs such as checkbox, text input, button, texarea, select.
 - Edit label, placeholders and text contents.
 - Fully responsive.
 - Change inputs position by Drag & Drop.
