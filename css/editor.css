@@ -63,6 +63,7 @@
     padding-bottom: 1rem;
     transition: transform 0.3s;
     transform: translateX(-100%);
+    scrollbar-gutter: stable;
 }
 
 .sidebar_right {
@@ -70,6 +71,7 @@
     right: 0;
     padding: 1rem 0.8rem;
     transform: translateX(100%);
+    padding-right: 0;
 }
 
 .main_left .sidebar_left,
